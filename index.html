@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>체스 엔진 — 보드</title>
+    <link rel="stylesheet" href="./css/board.css" />
+  </head>
+  <body>
+    <main class="page">
+      <h1>체스 엔진</h1>
+      <div id="board" class="board" role="grid" aria-label="체스판"></div>
+      <aside class="panel">
+        <h2>Phase 1 — 시작 배치</h2>
+        <dl class="meta">
+          <dt>차례</dt>
+          <dd id="turn">-</dd>
+          <dt>FEN</dt>
+          <dd id="fen">-</dd>
+        </dl>
+        <p class="note">지금은 판과 기물만 그립니다. 클릭으로 두는 기능은 Phase 2에서 넣습니다.</p>
+      </aside>
+    </main>
+    <script type="module" src="./js/ui.js"></script>
+  </body>
+</html>
