@@ -3,24 +3,58 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>체스 엔진 — 보드</title>
+    <title>체스 엔진 — 대국</title>
     <link rel="stylesheet" href="./css/board.css" />
   </head>
   <body>
     <main class="page">
       <h1>체스 엔진</h1>
-      <div id="board" class="board" role="grid" aria-label="체스판"></div>
+
+      <div class="board-area">
+        <div id="board" class="board" role="grid" aria-label="체스판"></div>
+        <p id="status" class="status" role="status" aria-live="polite">백 차례</p>
+        <div class="controls">
+          <button type="button" id="new-game">새 게임</button>
+          <button type="button" id="undo">무르기</button>
+          <button type="button" id="flip">보드 뒤집기</button>
+        </div>
+      </div>
+
       <aside class="panel">
-        <h2>Phase 1 — 시작 배치</h2>
-        <dl class="meta">
-          <dt>차례</dt>
-          <dd id="turn">-</dd>
-          <dt>FEN</dt>
-          <dd id="fen">-</dd>
-        </dl>
-        <p class="note">지금은 판과 기물만 그립니다. 클릭으로 두는 기능은 Phase 2에서 넣습니다.</p>
+        <section>
+          <h2>기보</h2>
+          <ol id="moves" class="moves" aria-label="수 기록">
+            <li class="moves-empty">아직 둔 수가 없습니다.</li>
+          </ol>
+        </section>
+
+        <section>
+          <h2>국면</h2>
+          <dl class="meta">
+            <dt>차례</dt>
+            <dd id="turn">백</dd>
+            <dt>합법수</dt>
+            <dd id="legal-count">20</dd>
+            <dt>FEN</dt>
+            <dd id="fen">-</dd>
+          </dl>
+        </section>
+
+        <p class="note">
+          기물을 클릭해 집고, 표시된 칸을 클릭해 둡니다. 캐슬링은 킹을 두 칸 옆으로,
+          앙파상과 프로모션도 규칙대로 동작합니다.
+        </p>
       </aside>
     </main>
+
+    <div id="promotion" class="promotion" hidden>
+      <div class="promotion-card" role="dialog" aria-modal="true" aria-label="프로모션 선택">
+        <h2>승격할 기물</h2>
+        <div id="promotion-choices" class="promotion-choices"></div>
+        <button type="button" id="promotion-cancel" class="promotion-cancel">취소</button>
+      </div>
+    </div>
+
     <script type="module" src="./js/ui.js"></script>
   </body>
 </html>

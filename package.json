@@ -1,0 +1,10 @@
+{
+  "name": "chesse-engine",
+  "version": "0.0.0",
+  "private": true,
+  "description": "브라우저에서 도는 체스 엔진. 정적 파일이라 index.html만 열면 된다.",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/perft.js && node tests/game.js"
+  }
+}
