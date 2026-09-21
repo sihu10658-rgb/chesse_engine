@@ -14,7 +14,7 @@ python3 -m http.server 8000
 
 `index.html`을 파일로 바로 열면 ES 모듈이 CORS에 막히므로 로컬 서버로 연다.
 
-## 지금 되는 것 (Phase 2–4)
+## 지금 되는 것 (Phase 2–5)
 
 - 기물을 클릭해 집고, 표시된 칸을 클릭해 두기
 - 합법수만 허용 — 핀된 기물 고정, 체크 무시 불가
@@ -23,8 +23,9 @@ python3 -m http.server 8000
 - 대수 표기(SAN) 기보, 무르기, 보드 뒤집기, 새 게임
 - 분석 패널 — 기물 가치 평가(백 기준 centipawn), 후보수 목록, 캡처·체크·승격 분류
 - 후보수를 클릭해서 두기
+- 엔진과 대국 — 알파베타 탐색, 깊이 2~5 선택, 추천 수 보기
 
-아직 없는 것: 엔진 탐색(Phase 5), FEN 불러오기·PGN 내보내기(Phase 6).
+아직 없는 것: FEN 불러오기·PGN 내보내기·기권(Phase 6).
 
 ## 구조
 
@@ -34,6 +35,7 @@ js/board.js    64칸 보드, FEN 파싱/출력
 js/moves.js    기물별 의사수, 공격 판정, 합법수
 js/rules.js    수 적용/되돌리기, 게임 상태, SAN
 js/analyzer.js 정적 평가와 후보수 분류 (탐색 없음)
+js/engine.js   네가맥스 + 알파베타 탐색, 위치 점수
 js/ui.js       클릭 입력과 렌더링
 ```
 
@@ -48,3 +50,4 @@ npm test
 - `tests/perft.js` — 알려진 5개 국면의 perft 값 비교 (규칙 정확성)
 - `tests/game.js` — 대국 시나리오 (메이트, 캐슬링, 앙파상, 프로모션, 무르기)
 - `tests/analyzer.js` — 평가 점수와 후보수 분류
+- `tests/engine.js` — 가지치기 정확성, 전술(메이트·공짜 기물), 시간 제한, K+Q vs K 외통

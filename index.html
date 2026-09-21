@@ -17,6 +17,19 @@
           <button type="button" id="new-game">새 게임</button>
           <button type="button" id="undo">무르기</button>
           <button type="button" id="flip">보드 뒤집기</button>
+          <label class="control-toggle">
+            <input type="checkbox" id="engine-toggle" />
+            엔진이 흑
+          </label>
+          <label class="control-toggle">
+            깊이
+            <select id="engine-depth">
+              <option value="2">2</option>
+              <option value="3" selected>3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          </label>
         </div>
       </div>
 
@@ -38,6 +51,10 @@
             <span id="eval-fill" class="eval-fill"></span>
           </div>
           <p id="move-counts" class="move-counts">캡처 0 · 체크 0 · 승격 0</p>
+          <div class="engine">
+            <button type="button" id="engine-hint">추천 수</button>
+            <span id="engine-line" class="engine-line">—</span>
+          </div>
           <ul id="candidates" class="candidates" aria-label="후보수"></ul>
         </section>
 
@@ -55,7 +72,8 @@
 
         <p class="note">
           기물을 클릭해 집고, 표시된 칸을 클릭해 둡니다. 후보수를 클릭해도 그대로 둘 수
-          있습니다. 평가 점수는 아직 기물 가치 합이고, 탐색은 하지 않습니다.
+          있습니다. 패널의 평가 점수는 기물 가치 합이고, 엔진 점수는 위치 점수까지
+          더해 탐색한 결과입니다.
         </p>
       </aside>
     </main>

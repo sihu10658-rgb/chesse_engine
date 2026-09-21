@@ -8,6 +8,7 @@ import { createStartPosition, indexToSquare, toFEN } from "./board.js";
 import { findKing } from "./moves.js";
 import { getGameStatus, isGameOver, playMove, undoMove } from "./rules.js";
 import { analyze, formatScore } from "./analyzer.js";
+import { findBestMove } from "./engine.js";
 
 const FILES = "abcdefgh";
 
@@ -25,6 +26,10 @@ const dom = {
   evalFill: document.querySelector("#eval-fill"),
   moveCounts: document.querySelector("#move-counts"),
   candidates: document.querySelector("#candidates"),
+  engineToggle: document.querySelector("#engine-toggle"),
+  engineDepth: document.querySelector("#engine-depth"),
+  engineHint: document.querySelector("#engine-hint"),
+  engineLine: document.querySelector("#engine-line"),
   promotion: document.querySelector("#promotion"),
   promotionChoices: document.querySelector("#promotion-choices"),
   promotionCancel: document.querySelector("#promotion-cancel"),
@@ -36,6 +41,13 @@ let report = analyze(state, status);
 let selected = null;
 let flipped = false;
 let pendingPromotion = null;
+
+/** 엔진은 흑을 잡는다. 사람은 항상 백. */
+const ENGINE_COLOR = "b";
+let engineOn = false;
+let thinking = false;
+let hint = null; // 보드에 표시할 추천 수 { move }
+let engineReport = null; // 패널에 쓸 마지막 탐색 결과
 
 function movesFrom(index) {
   return status.legalMoves.filter((move) => move.from === index);
@@ -109,6 +121,9 @@ function renderBoard() {
       cell.classList.add("last-move");
     }
     if (index === checkedKing) cell.classList.add("in-check");
+    if (hint && (index === hint.move.from || index === hint.move.to)) {
+      cell.classList.add("hint");
+    }
 
     const target = targetByIndex.get(index);
     if (target) {
@@ -177,7 +192,85 @@ function renderAnalysis() {
   const { captures, checks, promotions } = report.counts;
   dom.moveCounts.textContent = `캡처 ${captures} · 체크 ${checks} · 승격 ${promotions}`;
 
+  renderEngineLine();
   renderCandidates();
+}
+
+function renderEngineLine() {
+  dom.engineHint.disabled = thinking || isGameOver(status);
+
+  if (thinking) {
+    dom.engineLine.textContent = "생각 중…";
+    return;
+  }
+  if (!engineReport) {
+    dom.engineLine.textContent = isGameOver(status) ? "대국 종료" : "—";
+    return;
+  }
+
+  // 탐색 점수는 둘 차례 기준이다. 패널의 재료 점수와 같게 백 기준으로 돌려 적는다.
+  const { san, score, color, mateIn, depth, nodes, elapsed } = engineReport;
+  const white = color === "w" ? score : -score;
+  const value = mateIn ? `M${Math.abs(mateIn)}` : formatScore(white);
+  dom.engineLine.textContent =
+    `${san} ${value} · 깊이 ${depth} · ${nodes.toLocaleString()}노드 · ${elapsed}ms`;
+}
+
+function engineOptions() {
+  return { depth: Number(dom.engineDepth.value), timeMs: 3000 };
+}
+
+/**
+ * 탐색은 동기라서 그동안 화면이 멈춘다.
+ * "생각 중…"을 먼저 그리고 한 틱 뒤에 돌린다.
+ */
+function think(play = false) {
+  if (thinking || isGameOver(status)) return;
+  thinking = true;
+  hint = null;
+  engineReport = null;
+  render();
+
+  setTimeout(() => {
+    const searched = findBestMove(state, engineOptions());
+    thinking = false;
+    if (!searched) {
+      render();
+      return;
+    }
+
+    // 엔진은 자기 수 객체를 만든다. 표기는 분석 결과에서 같은 수를 찾아 쓴다.
+    const described = report.moves.find(
+      (entry) =>
+        entry.move.from === searched.move.from &&
+        entry.move.to === searched.move.to &&
+        entry.move.promotion === searched.move.promotion,
+    );
+
+    engineReport = {
+      san: described?.san ?? "",
+      score: searched.score,
+      color: state.sideToMove,
+      mateIn: searched.mateIn,
+      depth: searched.depth,
+      nodes: searched.nodes,
+      elapsed: searched.elapsed,
+    };
+
+    if (play) {
+      applyMove(searched.move, { keepEngineReport: true });
+    } else {
+      hint = { move: searched.move };
+      render();
+    }
+  }, 20);
+}
+
+/** 엔진 차례면 두게 한다. */
+function maybePlayEngine() {
+  if (!engineOn || thinking || isGameOver(status)) return;
+  if (state.sideToMove !== ENGINE_COLOR) return;
+  think(true);
 }
 
 function renderCandidates() {
@@ -230,7 +323,7 @@ function candidateTag(entry) {
 }
 
 function playCandidate(entry) {
-  if (pendingPromotion || isGameOver(status)) return;
+  if (pendingPromotion || thinking || isGameOver(status)) return;
   applyMove(entry.move);
 }
 
@@ -275,14 +368,17 @@ function refresh() {
   render();
 }
 
-function applyMove(move) {
+function applyMove(move, { keepEngineReport = false } = {}) {
   state = playMove(state, move, status.legalMoves);
   selected = null;
+  hint = null;
+  if (!keepEngineReport) engineReport = null;
   refresh();
+  maybePlayEngine();
 }
 
 function handleSquareClick(index) {
-  if (pendingPromotion) return;
+  if (pendingPromotion || thinking) return;
 
   if (selected != null) {
     const candidates = movesFrom(selected).filter((move) => move.to === index);
@@ -343,15 +439,27 @@ dom.newGame.addEventListener("click", () => {
   closePromotion();
   state = createStartPosition();
   selected = null;
+  hint = null;
+  engineReport = null;
   refresh();
+  maybePlayEngine();
 });
 
 dom.undo.addEventListener("click", () => {
+  if (thinking) return;
   closePromotion();
-  const previous = undoMove(state);
+
+  let previous = undoMove(state);
   if (!previous) return;
+  // 엔진과 둘 때는 내 차례로 돌아올 때까지 무른다.
+  if (engineOn && previous.sideToMove === ENGINE_COLOR) {
+    previous = undoMove(previous) ?? previous;
+  }
+
   state = previous;
   selected = null;
+  hint = null;
+  engineReport = null;
   refresh();
 });
 
@@ -359,6 +467,15 @@ dom.flip.addEventListener("click", () => {
   flipped = !flipped;
   render();
 });
+
+dom.engineToggle.addEventListener("change", () => {
+  engineOn = dom.engineToggle.checked;
+  hint = null;
+  render();
+  maybePlayEngine();
+});
+
+dom.engineHint.addEventListener("click", () => think(false));
 
 dom.promotionCancel.addEventListener("click", closePromotion);
 
