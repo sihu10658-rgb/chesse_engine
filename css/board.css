@@ -302,6 +302,109 @@ h1 {
   word-break: break-all;
 }
 
+/* 분석 패널 ------------------------------------------------------------- */
+
+.eval {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.eval-score {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.eval-score.ahead-white {
+  color: #2f6b3a;
+}
+
+.eval-score.ahead-black {
+  color: var(--danger);
+}
+
+.eval-note {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.eval-bar {
+  display: block;
+  height: 8px;
+  margin: 8px 0;
+  overflow: hidden;
+  background: var(--black-piece);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.eval-fill {
+  display: block;
+  width: 50%;
+  height: 100%;
+  background: var(--white-piece);
+  transition: width 140ms ease-out;
+}
+
+.move-counts {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.candidates {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 4px;
+  max-height: 200px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.candidate {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px;
+  width: 100%;
+  padding: 4px 6px;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: inherit;
+  cursor: pointer;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.82rem;
+  text-align: left;
+}
+
+.candidate:hover {
+  background: #f1e7d8;
+}
+
+.candidate.from-selected {
+  border-color: var(--select);
+  background: #fdf4d8;
+}
+
+.candidate-tag {
+  color: var(--muted);
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.candidate-tag.gain {
+  color: #2f6b3a;
+}
+
+.candidate-tag.mate,
+.candidate-tag.check {
+  color: var(--danger);
+}
+
 .note {
   margin: 0;
   color: var(--muted);

@@ -7,6 +7,7 @@ import { pieceColor, pieceSymbol, pieceType } from "./pieces.js";
 import { createStartPosition, indexToSquare, toFEN } from "./board.js";
 import { findKing } from "./moves.js";
 import { getGameStatus, isGameOver, playMove, undoMove } from "./rules.js";
+import { analyze, formatScore } from "./analyzer.js";
 
 const FILES = "abcdefgh";
 
@@ -20,6 +21,10 @@ const dom = {
   newGame: document.querySelector("#new-game"),
   undo: document.querySelector("#undo"),
   flip: document.querySelector("#flip"),
+  evalScore: document.querySelector("#eval-score"),
+  evalFill: document.querySelector("#eval-fill"),
+  moveCounts: document.querySelector("#move-counts"),
+  candidates: document.querySelector("#candidates"),
   promotion: document.querySelector("#promotion"),
   promotionChoices: document.querySelector("#promotion-choices"),
   promotionCancel: document.querySelector("#promotion-cancel"),
@@ -27,6 +32,7 @@ const dom = {
 
 let state = createStartPosition();
 let status = getGameStatus(state);
+let report = analyze(state, status);
 let selected = null;
 let flipped = false;
 let pendingPromotion = null;
@@ -153,6 +159,79 @@ function renderPanel() {
   dom.undo.disabled = state.history.length === 0;
 
   renderMoveList();
+  renderAnalysis();
+}
+
+/** 평가 막대는 ±10폰을 양 끝으로 본다. 그 밖은 끝에 붙인다. */
+function evalPercent(score) {
+  const clamped = Math.max(-1000, Math.min(1000, score));
+  return 50 + clamped / 20;
+}
+
+function renderAnalysis() {
+  dom.evalScore.textContent = formatScore(report.score);
+  dom.evalScore.classList.toggle("ahead-white", report.score > 0);
+  dom.evalScore.classList.toggle("ahead-black", report.score < 0);
+  dom.evalFill.style.width = `${evalPercent(report.score)}%`;
+
+  const { captures, checks, promotions } = report.counts;
+  dom.moveCounts.textContent = `캡처 ${captures} · 체크 ${checks} · 승격 ${promotions}`;
+
+  renderCandidates();
+}
+
+function renderCandidates() {
+  if (report.moves.length === 0) {
+    const empty = document.createElement("li");
+    empty.className = "moves-empty";
+    empty.textContent = "둘 수 있는 수가 없습니다.";
+    dom.candidates.replaceChildren(empty);
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  for (const entry of report.moves) {
+    const item = document.createElement("li");
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "candidate";
+    if (entry.move.from === selected) button.classList.add("from-selected");
+    button.addEventListener("click", () => playCandidate(entry));
+
+    const san = document.createElement("span");
+    san.className = "candidate-san";
+    san.textContent = entry.san;
+    button.append(san);
+
+    const tag = candidateTag(entry);
+    if (tag) {
+      const label = document.createElement("span");
+      label.className = `candidate-tag ${tag.className}`;
+      label.textContent = tag.text;
+      button.append(label);
+    }
+
+    item.append(button);
+    fragment.append(item);
+  }
+
+  dom.candidates.replaceChildren(fragment);
+  dom.candidates.scrollTop = 0;
+}
+
+function candidateTag(entry) {
+  if (entry.mate) return { text: "메이트", className: "mate" };
+  if (entry.promotion) return { text: `+${entry.gain / 100}`, className: "gain" };
+  if (entry.capture) return { text: `+${entry.gain / 100}`, className: "gain" };
+  if (entry.check) return { text: "체크", className: "check" };
+  if (entry.castle) return { text: "캐슬링", className: "quiet" };
+  return null;
+}
+
+function playCandidate(entry) {
+  if (pendingPromotion || isGameOver(status)) return;
+  applyMove(entry.move);
 }
 
 function renderMoveList() {
@@ -192,6 +271,7 @@ function render() {
 
 function refresh() {
   status = getGameStatus(state);
+  report = analyze(state, status);
   render();
 }
 

@@ -29,6 +29,19 @@
         </section>
 
         <section>
+          <h2>분석</h2>
+          <div class="eval">
+            <strong id="eval-score" class="eval-score">0.00</strong>
+            <span class="eval-note">백 기준 · 폰</span>
+          </div>
+          <div class="eval-bar" role="img" aria-label="평가 막대">
+            <span id="eval-fill" class="eval-fill"></span>
+          </div>
+          <p id="move-counts" class="move-counts">캡처 0 · 체크 0 · 승격 0</p>
+          <ul id="candidates" class="candidates" aria-label="후보수"></ul>
+        </section>
+
+        <section>
           <h2>국면</h2>
           <dl class="meta">
             <dt>차례</dt>
@@ -41,8 +54,8 @@
         </section>
 
         <p class="note">
-          기물을 클릭해 집고, 표시된 칸을 클릭해 둡니다. 캐슬링은 킹을 두 칸 옆으로,
-          앙파상과 프로모션도 규칙대로 동작합니다.
+          기물을 클릭해 집고, 표시된 칸을 클릭해 둡니다. 후보수를 클릭해도 그대로 둘 수
+          있습니다. 평가 점수는 아직 기물 가치 합이고, 탐색은 하지 않습니다.
         </p>
       </aside>
     </main>
